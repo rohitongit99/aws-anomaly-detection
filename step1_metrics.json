@@ -1,0 +1,35 @@
+{
+ "detection_anomaly_vs_normal": {
+  "ours": {
+   "precision": 0.825,
+   "recall": 0.839,
+   "f1": 0.832
+  },
+  "rule_based": {
+   "precision": 0.875,
+   "recall": 0.148,
+   "f1": 0.253
+  }
+ },
+ "fault_detection": {
+  "ours": {
+   "precision": 0.778,
+   "recall": 0.825,
+   "f1": 0.801
+  },
+  "rule_based": {
+   "precision": 0.762,
+   "recall": 0.184,
+   "f1": 0.297
+  }
+ },
+ "real_event_rows_wrongly_called_fault_pct": {
+  "ours": 2.1,
+  "rule_based": 6.3
+ },
+ "imputation_MAE_on_corrected_cells": {
+  "raw_faulty": 6.3,
+  "after_auto_correction": 0.27,
+  "cells": 235
+ }
+}

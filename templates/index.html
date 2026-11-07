@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Quality Control · Chh. Sambhajinagar</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{--bg:#EEF3F8;--panel:#FFFFFF;--ink:#1F2D3D;--mute:#64748B;--line:#DCE5EE;--ok:#3FA776;--okbg:#E9F6EF;--fault:#E0524D;--faultT:#C73E3A;--faultbg:#FDEDEC;--event:#3B7DD8;--eventT:#2A64B8;--eventbg:#E8F1FC;--fix:#2E9D6B;--gray:#9AAABB;--brand:#3B6FB6;--navy:#1D3557;--warnbg:#FFF4E0;--warn:#F2B35E;--warnT:#7A4600}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,sans-serif;padding-bottom:32px}
+.top{background:linear-gradient(120deg,#D9E8F9,#EAF2FA 60%,#F3F7FB);color:var(--navy);border-bottom:1px solid var(--line);padding:18px 0 16px;margin-bottom:18px}.top .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 24px}
+.top h1{font-size:22px;margin:0;font-weight:650;letter-spacing:.01em}.top p{margin:2px 0 0;color:#4B6580;font-size:14px}
+.chip{font-size:12px;letter-spacing:.04em;text-transform:uppercase;border:1px solid #A9C3E3;background:#fff;color:#34567F;padding:4px 10px;border-radius:3px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 18px}h2{font-size:12.5px;margin:0 0 12px;font-weight:650;letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
+#ttl{font-size:17px;letter-spacing:0;text-transform:none;color:var(--ink)}.sub{color:var(--mute);margin:0 0 14px;max-width:80ch}
+.guide{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:14px;color:var(--mute);margin-bottom:14px}.guide b{color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.stat{background:var(--okbg);border:1px solid #CFE7DA;border-top:4px solid var(--ok);border-radius:4px;padding:10px 14px}.stat.f{border-top-color:var(--fault);background:var(--faultbg);border-color:#F3D3D1}.stat.e{border-top-color:var(--event);background:var(--eventbg);border-color:#CFE0F5}
+.stat b{font-size:30px;line-height:1.1;margin-right:8px;font-variant-numeric:tabular-nums}.stat small{display:block;color:var(--mute);font-size:13px}
+main{display:grid;grid-template-columns:minmax(320px,5fr) 7fr;gap:14px}@media(max-width:880px){main,.stats{grid-template-columns:1fr}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:16px;min-width:0}.wide{grid-column:1/-1}
+#chart{display:block;width:100%;height:auto}.lbl{font-size:12px;fill:var(--mute)}
+#map{height:380px;border-radius:3px;border:1px solid var(--line);background:var(--bg);z-index:0;color:var(--mute);display:grid;place-items:center;text-align:center;padding:10px}
+.leaflet-container{font:inherit}
+.pin{position:relative;width:26px;height:26px}.pin .shape{position:absolute;left:4px;top:4px;width:18px;height:18px;border-radius:50%;background:var(--ok);border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+.pin[data-c="1"] .shape{background:var(--fault);border-radius:3px;transform:rotate(45deg)}.pin[data-c="2"] .shape{background:var(--event);box-shadow:0 0 0 6px rgba(59,125,216,.3)}
+.pin.sel .shape{outline:3px solid #1D3557;outline-offset:2px}.pin b{position:absolute;left:28px;top:3px;font-size:13px;line-height:18px;background:rgba(255,255,255,.93);color:#17212E;padding:0 5px;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--mute);margin-top:10px}.legend i{display:inline-block;width:11px;height:11px;margin-right:6px;vertical-align:-1px}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}.ctl input{order:5;flex:1 1 100%;accent-color:var(--brand)}.ctl button{white-space:nowrap}#clock{margin-left:auto}
+button,.tab{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:4px;padding:7px 14px;cursor:pointer}
+button:hover,.tab:hover{border-color:var(--mute)}button.go{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+button:focus-visible,.tab:focus-visible,input:focus-visible,li:focus-visible,.leaflet-marker-icon:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.jump{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center;font-size:14px;color:var(--mute)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.tab[aria-selected=true]{background:var(--brand);color:#fff;border-color:var(--brand)}.tab{background:#F6F9FC}
+#clock{font-weight:650;white-space:nowrap;font-variant-numeric:tabular-nums}
+.why{border-left:5px solid var(--ok);padding:10px 14px;margin-top:12px;background:var(--okbg);border-radius:0 4px 4px 0}.why[data-c="1"]{border-color:var(--fault);background:var(--faultbg)}.why[data-c="2"]{border-color:var(--event);background:var(--eventbg)}
+.why h3{margin:0 0 6px;font-size:17px}.row{display:grid;grid-template-columns:130px 1fr;gap:2px 10px;padding:3px 0}.row span{color:var(--mute);font-size:14px}@media(max-width:560px){.row{grid-template-columns:1fr}}
+.f{color:var(--faultT)}.e{color:var(--eventT)}.tag{font-weight:700}
+ul{list-style:none;margin:0;padding:0}li{padding:9px 12px;margin-bottom:6px;border-left:5px solid var(--ok);background:var(--bg);border-radius:0 4px 4px 0;cursor:pointer}li.f{border-color:var(--fault);background:var(--faultbg)}li.e{border-color:var(--event);background:var(--eventbg)}li small{color:var(--mute);display:block}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}@media(max-width:880px){.kpis{grid-template-columns:1fr}}
+.kpi h3{font-size:15px;margin:0 0 2px}.kpi p{margin:0 0 8px;color:var(--mute);font-size:13px}.bar{display:grid;grid-template-columns:120px 1fr 48px;gap:8px;align-items:center;font-size:14px;margin:4px 0}
+.bar div{height:14px;background:var(--bg);border:1px solid var(--line);border-radius:2px;overflow:hidden}.bar div i{display:block;height:100%;background:var(--gray)}.bar.us div i{background:var(--brand)}.modebar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}.seg{display:inline-flex}.seg button{border-radius:0}.seg button:first-child{border-radius:4px 0 0 4px}.seg button:last-child{border-radius:0 4px 4px 0;margin-left:-1px}.seg button[aria-pressed=true]{background:var(--brand);border-color:var(--brand);color:#fff}
+.live{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--faultT)}.live:before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--fault);margin-right:6px}
+button.warn{margin-left:auto;background:var(--warnbg);border-color:var(--warn);color:var(--warnT);font-weight:650}button.warn:hover{border-color:#D98A1F}button:disabled{opacity:.5;cursor:not-allowed}
+#gbar{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;justify-content:space-between;background:var(--warnbg);border:1px solid var(--warn);color:var(--warnT);border-radius:4px;padding:10px 14px;margin-bottom:14px}#gbar[hidden]{display:none}#gbar b{color:#5A3500}.bar b{text-align:right;font-variant-numeric:tabular-nums}
+</style></head><body><header class="top"><div class="wrap"><div><h1>AWS Quality Control · Chh. Sambhajinagar region</h1><p>Automatic Weather Station network: anomaly detection, fault vs real-event check, auto-correction</p></div><span class="chip">Prototype · synthetic test data</span></div></header>
+<div class="wrap">
+<p class="sub">Checks every reading from 12 weather stations. It tells a broken sensor apart from real extreme weather by asking the nearest stations, then fixes the bad values.</p>
+<div class="guide"><span><b>1.</b> Press Play, or use the jump buttons</span><span><b>2.</b> Watch the map change colour</span><span><b>3.</b> Read the decision under the chart</span></div>
+<div class="modebar"><span class="seg" role="group" aria-label="Mode"><button id="mR" aria-pressed="true">Saved replay</button><button id="mL" aria-pressed="false">Live demo</button></span><span id="livetag" class="live" hidden>LIVE</span><button id="glitch" class="warn" title="Break a random sensor for 1 to 2 minutes">Sensor glitch (demo)</button></div>
+<div id="gbar" hidden aria-live="polite"></div>
+<div class="stats" aria-live="polite"><div class="stat"><b id="n0"></b>stations normal<small>readings look fine</small></div><div class="stat f"><b id="n1"></b>sensor faults<small>broken sensor, value corrected</small></div><div class="stat e"><b id="n2"></b>real weather events<small>neighbours agree, value kept</small></div></div>
+<main>
+<section><h2>Station map</h2><div id="map" role="region" aria-label="Station map"></div>
+<div class="legend"><span><i style="background:var(--ok);border-radius:50%"></i>Normal</span><span><i style="background:var(--fault);transform:rotate(45deg)"></i>Sensor fault</span><span><i style="background:var(--event);border-radius:50%"></i>Real weather event</span><span>Numbers are station IDs (AWS 01 to 12)</span><span>Dashed lines: the 3 nearest stations used for the check</span><span>A beep plays when a new sensor fault appears</span></div>
+<div class="ctl"><button id="play" class="go">Play replay</button><button id="snd" aria-pressed="true">Sound: on</button><input id="slider" type="range" min="0" value="0" aria-label="Time"><span id="clock"></span></div>
+<div class="jump">Jump to:<button id="jf">Next sensor fault</button><button id="je">Next real event</button></div></section>
+<section><h2 id="ttl"></h2><div class="tabs" id="tabs" role="tablist"></div><svg id="chart" viewBox="0 0 640 260" role="img" aria-label="Raw and corrected readings"></svg>
+<div class="legend"><span><i style="background:var(--gray)"></i>What the sensor sent</span><span><i style="background:var(--fix)"></i>What we trust (corrected)</span><span><i style="background:var(--fault);opacity:.35"></i>Fault period</span><span><i style="background:var(--event);opacity:.35"></i>Real event period</span></div>
+<div class="why" id="why" aria-live="polite"></div></section>
+<section class="wide"><h2>Latest alerts <small style="font-weight:400;color:var(--mute)">· click one to open it</small></h2><ul id="alerts"></ul></section>
+<section class="wide"><h2>How well does it work?</h2><div class="kpis" id="kpis"></div><p class="sub" style="margin:12px 0 0;font-size:13px">Measured on 4 unseen test days of synthetic data with injected faults and weather events. Real IMD data will give different numbers.</p></section>
+</main></div>
+<script>
+const V=[["temp","Temperature","°C"],["rh","Humidity","%"],["pres","Pressure","hPa"],["wind","Wind","m/s"],["rain","Rain","mm per 15 min"]];
+const $=s=>document.querySelector(s),NS="http://www.w3.org/2000/svg",mk=(n,a={},p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p&&p.appendChild(e);return e};
+let D,t=0,sel=0,vi=0,timer=null,alerts=[],mk_=[],nn=[],px=[],map=null,lines=null,actx=null,sound=true,live=false,follow=true,ltimer=null,off=0,gl=null,gprev=false,TICK_MS=1000,D0=null,busy=false;
+const KEYS=["temp","rh","pres","wind","rain"];
+function ac(){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();if(actx.state==="suspended")actx.resume()}catch(e){}return actx}
+function beep(){if(!sound)return;const c=ac();if(!c)return;[0,.25].forEach(d=>{const o=c.createOscillator(),g=c.createGain(),s=c.currentTime+d;o.type="square";o.frequency.value=880;g.gain.setValueAtTime(.0001,s);g.gain.exponentialRampToValueAtTime(.2,s+.02);g.gain.exponentialRampToValueAtTime(.0001,s+.17);o.connect(g);g.connect(c.destination);o.start(s);o.stop(s+.2)})}
+document.addEventListener("pointerdown",ac,{once:true});
+fetch("/api/data").then(r=>r.json()).then(j=>{D=j;init()});
+const bar=(l,v,max,us,txt)=>`<div class="bar ${us?"us":""}"><span>${l}</span><div><i style="width:${Math.max(2,v/max*100)}%"></i></div><b>${txt??v}</b></div>`;
+function plain(ex,c){
+  const rd=ex.match(/read (-?[\d.]+), expected ~(-?[\d.]+)/),nb=ex.match(/(\d)\/3 nearest/),fx=ex.match(/(?:replaced with|estimated) (-?\d+(?:\.\d+)?)/),nod=/no valid reading/.test(ex);
+  return{saw:nod?"The sensor sent no data.":rd?`Sensor read <b>${rd[1]}</b>, but about <b>${rd[2]}</b> was expected.`+(/frozen/.test(ex)?" The value was stuck.":""):"",
+  nbr:nod?"Not needed, there is no reading to compare.":nb?`Checked the 3 nearest stations: <b>${nb[1]} of 3</b> show the same change.`:"",
+  dec:c===1?`Only this station is odd, so it is a <b class="f">sensor fault</b>. We used <b>${fx?fx[1]:"an estimate"}</b> instead.`:`Neighbours see it too, so it is <b class="e">real weather</b>. The value is kept.`}}
+function init(){
+  const m=D.metrics,N=D.times.length,a=m.detection_anomaly_vs_normal,e=m.real_event_rows_wrongly_called_fault_pct,i=m.imputation_MAE_on_corrected_cells;
+  $("#kpis").innerHTML=`<div class="kpi"><h3>Finding problems</h3><p>Score out of 1.0 (higher is better)</p>${bar("Our system",a.ours.f1,1,1)}${bar("Fixed rules",a.rule_based.f1,1,0)}</div>
+  <div class="kpi"><h3>Real storms called faults</h3><p>Share of real events wrongly flagged (lower is better)</p>${bar("Our system",e.ours,Math.max(e.ours,e.rule_based),1,e.ours+"%")}${bar("Fixed rules",e.rule_based,Math.max(e.ours,e.rule_based),0,e.rule_based+"%")}</div>
+  <div class="kpi"><h3>Error on bad readings</h3><p>Average error in the value (lower is better)</p>${bar("After our fix",i.after_auto_correction,i.raw_faulty,1)}${bar("Raw bad data",i.raw_faulty,i.raw_faulty,0)}</div>`;
+  const sl=$("#slider");sl.max=N-1;sl.oninput=()=>{t=+sl.value;follow=live?t===D.times.length-1:true;render()};
+  $("#play").onclick=()=>{if(timer){clearInterval(timer);timer=null;$("#play").textContent="Play replay";return}
+    if(t>=N-2)t=0;$("#play").textContent="Pause";timer=setInterval(()=>{if(t>=N-2){$("#play").click();return}const p=t;t+=2;sl.value=t;render();if(alerts.some(a=>a.c===1&&a.t>p&&a.t<=t))beep()},110)};
+  $("#snd").onclick=()=>{sound=!sound;$("#snd").textContent="Sound: "+(sound?"on":"off");$("#snd").setAttribute("aria-pressed",sound);if(sound)beep()};
+  V.forEach((v,k)=>{const b=document.createElement("button");b.className="tab";b.role="tab";b.textContent=v[1];b.onclick=()=>{vi=k;render()};$("#tabs").appendChild(b)});
+  const la=D.stations.map(s=>s.lat),lo=D.stations.map(s=>s.lon),[a0,a1,o0,o1]=[Math.min(...la),Math.max(...la),Math.min(...lo),Math.max(...lo)];
+  nn=D.stations.map((s,k)=>D.stations.map((u,j)=>[j,Math.hypot(u.lat-s.lat,(u.lon-s.lon)*.94)]).filter(z=>z[0]!==k).sort((p,q)=>p[1]-q[1]).slice(0,3).map(z=>z[0]));
+  if(typeof L==="undefined"){$("#map").textContent="The map could not load. Please check your internet connection and refresh (Ctrl+F5)."}
+  else{
+    $("#map").innerHTML="";$("#map").style.display="block";$("#map").style.padding="0";
+    map=L.map("map");L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:17,attribution:"&copy; OpenStreetMap contributors"}).addTo(map);
+    map.fitBounds(L.latLngBounds(D.stations.map(s=>[s.lat,s.lon])),{padding:[40,40]});lines=L.layerGroup().addTo(map);
+    D.stations.forEach((s,k)=>{const mkr=L.marker([s.lat,s.lon],{icon:L.divIcon({className:"",iconSize:[26,26],iconAnchor:[13,13],html:`<div class="pin" data-c="0"><span class="shape"></span><b>${s.name.slice(3)}</b></div>`}),title:s.name,keyboard:true}).addTo(map);
+      mkr.on("click",()=>{sel=k;render()});mk_.push(mkr.getElement().firstChild)})}
+  D0=D;buildAlerts();
+  $("#mR").onclick=()=>{if(live)exitLive()};$("#mL").onclick=()=>{if(!live)enterLive()};
+  $("#glitch").onclick=async()=>{ac();if(!live)await enterLive();const g=await(await fetch("/api/live/glitch",{method:"POST"})).json();sel=g.s;vi=g.v;follow=true;t=D.times.length-1;$("#slider").value=t;glitchUI(g);render()};
+  const jump=c=>{const l=alerts.filter(x=>x.c===c),n=l.find(x=>x.t>t)||l[0];if(!n)return;if(c===1)beep();open_(n,c===2?1:0)};
+  $("#jf").onclick=()=>jump(1);$("#je").onclick=()=>jump(2);
+  const f=alerts.find(x=>x.c===2);if(f){sel=f.s;t=f.t+2;sl.value=t}render();
+}
+function buildAlerts(){alerts=[];for(let s=0;s<D.stations.length;s++)for(let k=0;k<D.times.length;k++)if(D.code[k][s]>0&&!(k>0&&D.code[k-1][s]===D.code[k][s]))alerts.push({t:k,s,c:D.code[k][s]});alerts.sort((p,q)=>p.t-q.t)}
+function pushRow(r){const k=D.times.length;D.times.push(r.time);D.code.push(r.code);D.score.push(r.score);KEYS.forEach(v=>{D.raw[v].push(r.raw[v]);D.corrected[v].push(r.cor[v])});for(const s in r.explain)D.explain[k+","+s]=r.explain[s];off=r.c-k;return k}
+function newAlerts(k){const n=[];D.code[k].forEach((c,s)=>{if(c>0&&(k===0||D.code[k-1][s]!==c)){const a={t:k,s,c};alerts.push(a);n.push(a)}});return n}
+function modeUI(){$("#mR").setAttribute("aria-pressed",!live);$("#mL").setAttribute("aria-pressed",live);$("#livetag").hidden=!live;$("#play").disabled=live;if(!live)$("#gbar").hidden=true}
+async function enterLive(){
+  if(timer)$("#play").click();
+  const j=await(await fetch("/api/live/start")).json();
+  D={stations:D0.stations,times:[],code:[],score:[],raw:{},corrected:{},explain:{},metrics:D0.metrics};KEYS.forEach(v=>{D.raw[v]=[];D.corrected[v]=[]});alerts=[];
+  j.rows.forEach(pushRow);t=D.times.length-1;follow=true;live=true;gl=null;gprev=false;
+  $("#slider").max=t;$("#slider").value=t;modeUI();render();clearInterval(ltimer);ltimer=setInterval(liveTick,TICK_MS)}
+function exitLive(){clearInterval(ltimer);ltimer=null;live=false;D=D0;buildAlerts();const f=alerts.find(x=>x.c===2);t=f?f.t+2:0;sel=f?f.s:0;$("#slider").max=D.times.length-1;$("#slider").value=t;modeUI();render()}
+async function liveTick(){if(busy||!live)return;busy=true;try{const r=await(await fetch("/api/live/tick")).json();if(!live)return;
+  const k=pushRow(r),n=newAlerts(k);if(n.some(a=>a.c===1))beep();$("#slider").max=k;if(follow){t=k;$("#slider").value=t}glitchUI(r.glitch);render()}catch(e){}finally{busy=false}}
+function glitchUI(g){const b=$("#gbar");
+  if(g&&g.active){gl=g;gprev=true;b.hidden=false;const k0=g.c0-off,hit=alerts.find(a=>a.c===1&&a.s===g.s&&a.t>=k0);
+    b.innerHTML=`<div><b>Demo glitch running</b> on <b>${g.name}</b> · ${g.var} · ${g.kind} · about <b>${g.left} s</b> left<br>${hit?`The system noticed it after <b>${hit.t-k0+1}</b> reading(s) and is replacing the bad values.`:"The system has not noticed it yet. Watching the next readings..."}</div><button id="gstop">Stop glitch</button>`;
+    $("#gstop").onclick=()=>fetch("/api/live/stop",{method:"POST"})}
+  else if(gprev){gprev=false;b.hidden=false;b.innerHTML="<div><b>Glitch finished.</b> The sensor is healthy again. Watch the readings return to normal.</div>"}}
+function open_(a,off){sel=a.s;const ex=D.explain[a.t+","+a.s]||"",k=V.findIndex(v=>ex.startsWith(v[1]));if(k>=0)vi=k;t=a.t+(off||0);$("#slider").value=t;render()}
+function path(arr,x,y){let d="",pen=false;arr.forEach((v,i)=>{if(v==null){pen=false;return}d+=(pen?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1);pen=true});return d}
+function chart(){
+  const N=D.times.length,W=Math.min(192,N),s0=Math.max(0,Math.min(t-144,N-W)),key=V[vi][0],raw=[],cor=[],cd=[];
+  for(let k=s0;k<s0+W;k++){raw.push(D.raw[key][k][sel]);cor.push(D.corrected[key][k][sel]);cd.push(D.code[k][sel])}
+  const all=raw.concat(cor).filter(v=>v!=null),lo=Math.min(...all),hi=Math.max(...all),pad=(hi-lo||1)*.08,[L,R,T,B,w,h]=[50,12,10,28,640,260];
+  const ymin=key==="rain"?0:lo-pad,ymax=hi+pad,x=i=>L+i/(W-1)*(w-L-R),y=v=>T+(1-(v-ymin)/(ymax-ymin))*(h-T-B),c=$("#chart");c.innerHTML="";
+  for(let i=0;i<W;){if(!cd[i]){i++;continue}let j=i;while(j+1<W&&cd[j+1]===cd[i])j++;mk("rect",{x:x(i)-2,y:T,width:x(j)-x(i)+4,height:h-T-B,fill:cd[i]===1?"var(--fault)":"var(--event)",opacity:.2},c);i=j+1}
+  for(let g=0;g<=4;g++){const v=ymin+(ymax-ymin)*g/4,yy=y(v);mk("line",{x1:L,x2:w-R,y1:yy,y2:yy,stroke:"var(--line)"},c);mk("text",{x:L-6,y:yy+4,class:"lbl","text-anchor":"end"},c).textContent=v.toFixed(Math.abs(hi-lo)<5?1:0)}
+  for(let i=0;i<W;i+=48)mk("text",{x:Math.max(x(i),L+30),y:h-8,class:"lbl","text-anchor":"middle"},c).textContent=D.times[s0+i];
+  mk("path",{d:path(raw,x,y),fill:"none",stroke:"var(--gray)","stroke-width":2,"stroke-dasharray":"5 3"},c);
+  mk("path",{d:path(cor,x,y),fill:"none",stroke:"var(--fix)","stroke-width":2.4},c);
+  if(t>=s0&&t<s0+W)mk("line",{x1:x(t-s0),x2:x(t-s0),y1:T,y2:h-B,stroke:"var(--ink)","stroke-width":1.5},c);
+}
+function render(){
+  $("#clock").textContent=D.times[t];$("#ttl").textContent=`${D.stations[sel].name} · ${V[vi][1]} (${V[vi][2]})`;
+  const cnt=[0,0,0];D.code[t].forEach(q=>cnt[q]++);$("#n0").textContent=cnt[0];$("#n1").textContent=cnt[1];$("#n2").textContent=cnt[2];
+  mk_.forEach((g,k)=>{g.dataset.c=D.code[t][k];g.classList.toggle("sel",k===sel)});
+  if(lines){lines.clearLayers();nn[sel].forEach(j=>L.polyline([[D.stations[sel].lat,D.stations[sel].lon],[D.stations[j].lat,D.stations[j].lon]],{color:"#0F2A47",weight:2,dashArray:"5 7"}).addTo(lines))}
+  [...$("#tabs").children].forEach((b,k)=>b.setAttribute("aria-selected",k===vi));chart();
+  const q=D.code[t][sel],why=$("#why"),ex=D.explain[t+","+sel]||"";why.dataset.c=q;
+  if(q){const p=plain(ex,q);why.innerHTML=`<h3><span class="${q===1?"f":"e"}">${q===1?"Sensor fault":"Real weather event"}</span> at ${D.stations[sel].name}</h3><div class="row"><span>What we saw</span><div>${p.saw}</div></div><div class="row"><span>Neighbour check</span><div>${p.nbr}</div></div><div class="row"><span>Decision</span><div>${p.dec}</div></div>`}
+  else why.innerHTML=`<h3>${D.stations[sel].name} looks normal</h3><div>Nothing unusual at this time. Use the jump buttons to find a fault or a real event.</div>`;
+  const list=alerts.filter(x=>x.t<=t).slice(-6).reverse(),ul=$("#alerts");ul.innerHTML="";
+  if(!list.length)ul.innerHTML='<li style="cursor:default">No alerts yet. Press Play.</li>';
+  list.forEach(x=>{const e=D.explain[x.t+","+x.s]||"",p=plain(e,x.c),li=document.createElement("li");li.tabIndex=0;li.className=x.c===1?"f":"e";
+    li.innerHTML=`<b>${D.stations[x.s].name}</b> · <span class="tag ${li.className}">${x.c===1?"Sensor fault":"Real event"}</span> · ${e.split(":")[0]}<small>${D.times[x.t]} · ${p.dec.replace(/<[^>]+>/g,"")}</small>`;
+    li.onclick=()=>open_(x,0);li.onkeydown=ev=>{if(ev.key==="Enter")li.click()};ul.appendChild(li)});
+}
+</script></body></html>
