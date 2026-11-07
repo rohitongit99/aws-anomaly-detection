@@ -62,5 +62,6 @@ The map needs an internet connection for the map tiles.
 ## Roadmap
 - 8th semester: real IMD / open AWS data, LSTM and GNN models, real-time alerts, paper
 
-Author
+##Author
+
 Rohit Shahu Jambhulkar
