@@ -64,4 +64,4 @@ The map needs an internet connection for the map tiles.
 
 ## Author
 
-Rohit Shahu Jambhulkar
+- Rohit Shahu Jambhulkar
